@@ -1,11 +1,12 @@
-import type {Metadata} from 'next';
-import { Inter } from 'next/font/google'; // Import Inter font
-import './globals.css';
-import { Toaster } from "@/components/ui/toaster"; // Import Toaster
 
-const inter = Inter({ // Initialize Inter font
+import type {Metadata} from 'next';
+import { Inter } from 'next/font/google';
+import './globals.css';
+import { Toaster } from "@/components/ui/toaster";
+
+const inter = Inter({
   subsets: ['latin'],
-  variable: '--font-inter', // CSS variable for Inter
+  variable: '--font-inter',
 });
 
 export const metadata: Metadata = {
@@ -22,7 +23,7 @@ export default function RootLayout({
     <html lang="en" className={inter.variable}>
       <body className={`font-sans antialiased`}>
         {children}
-        <Toaster /> {/* Add Toaster for potential future notifications */}
+        <Toaster />
       </body>
     </html>
   );
