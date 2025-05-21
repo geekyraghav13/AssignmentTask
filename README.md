@@ -1,5 +1,10 @@
-# Firebase Studio
+This is Intership Assignment Created By Raghav Sharma 
+To Run This do the following things 
 
-This is a NextJS starter in Firebase Studio.
+    # npm must be in you system
+        # got you current directory and chose the folder
+        # do ----      npm install  
+        # do -------     npm run dev 
 
-To get started, take a look at src/app/page.tsx.
+        You can see the local host for the project demo 
+        
