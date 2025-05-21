@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -8,20 +9,24 @@ import GameStatusDialog from '@/components/game/GameStatusDialog';
 import { initializeGameBoard, moveTiles, addRandomTile, checkForWin, checkGameOver } from '@/lib/game-logic';
 import type { GameBoard, Direction, GameState } from '@/types/game';
 import { GRID_SIZE } from '@/lib/game-constants';
-import { Button } from '@/components/ui/button'; // For potential future use e.g. theme toggle
+import { Button } from '@/components/ui/button'; 
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 const TwentyFortyFunPage: React.FC = () => {
-  const [gameState, setGameState] = useState<GameState>(() => ({
-    board: initializeGameBoard(GRID_SIZE),
-    score: 0,
-    isGameOver: false,
-    hasWon: false,
-    gridSize: GRID_SIZE,
-  }));
-
+  const [gameState, setGameState] = useState<GameState | null>(null); // Initialize gameState to null
   const [showDialog, setShowDialog] = useState(false);
+
+  useEffect(() => {
+    // Initialize game state on the client side after hydration
+    setGameState({
+      board: initializeGameBoard(GRID_SIZE),
+      score: 0,
+      isGameOver: false,
+      hasWon: false,
+      gridSize: GRID_SIZE,
+    });
+  }, []); // Empty dependency array ensures this runs once on mount
 
   const resetGame = useCallback(() => {
     setGameState({
@@ -35,7 +40,7 @@ const TwentyFortyFunPage: React.FC = () => {
   }, []);
 
   const handleMove = useCallback((direction: Direction) => {
-    if (gameState.isGameOver || gameState.hasWon) return;
+    if (!gameState || gameState.isGameOver || gameState.hasWon) return;
 
     const { newBoard, scoreGained, moved } = moveTiles(gameState.board, direction);
 
@@ -43,31 +48,33 @@ const TwentyFortyFunPage: React.FC = () => {
     let boardAfterMove = newBoard;
 
     if (moved) {
-      addRandomTile(boardAfterMove); // Add new tile only if something moved
+      addRandomTile(boardAfterMove); 
     }
     
     const gameWon = checkForWin(boardAfterMove);
-    // Game over check should be done after checking for win and potentially adding new tile
     const gameOver = checkGameOver(boardAfterMove);
 
-    setGameState(prev => ({
-      ...prev,
-      board: boardAfterMove,
-      score: currentScore,
-      isGameOver: gameOver && !gameWon, // Game over only if not won
-      hasWon: gameWon,
-    }));
+    setGameState(prev => {
+      if (!prev) return null; // Should not happen if guarded
+      return {
+        ...prev,
+        board: boardAfterMove,
+        score: currentScore,
+        isGameOver: gameOver && !gameWon, 
+        hasWon: gameWon,
+      };
+    });
 
     if (gameWon || (gameOver && !gameWon)) {
       setShowDialog(true);
     }
 
-  }, [gameState.board, gameState.score, gameState.isGameOver, gameState.hasWon]);
+  }, [gameState]);
 
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (gameState.isGameOver || gameState.hasWon) return;
+      if (!gameState || gameState.isGameOver || gameState.hasWon) return;
 
       let direction: Direction | null = null;
       switch (event.key) {
@@ -94,16 +101,27 @@ const TwentyFortyFunPage: React.FC = () => {
       }
 
       if (direction) {
-        event.preventDefault(); // Prevent page scrolling
+        event.preventDefault(); 
         handleMove(direction);
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [handleMove, gameState.isGameOver, gameState.hasWon]);
+    if (gameState) { // Only add event listener if gameState is initialized
+      window.addEventListener('keydown', handleKeyDown);
+      return () => {
+        window.removeEventListener('keydown', handleKeyDown);
+      };
+    }
+  }, [handleMove, gameState]);
+  
+  // Loading state until gameState is initialized on the client
+  if (!gameState) {
+    return (
+      <main className="flex flex-col items-center justify-center min-h-screen p-4 bg-background text-foreground">
+        <div className="text-2xl font-semibold text-primary animate-pulse">Loading TwentyFortyFun...</div>
+      </main>
+    );
+  }
   
   return (
     <main className="flex flex-col items-center justify-center min-h-screen p-4 bg-background text-foreground">
